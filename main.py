@@ -1,12 +1,12 @@
-import credentials.credentials as cred
+from credentials.credentials import Credentials
 
 from bot.main import AirQualityBot
 
 
 def main():
-    bot = AirQualityBot(credentials=cred)
-    data = bot.run()
-    data.to_csv('out/tables/current_data.csv', index=False)
+    bot = AirQualityBot(credentials=Credentials, mock=True)
+    bot.run()
+
 
 if __name__ == "__main__":
     main()

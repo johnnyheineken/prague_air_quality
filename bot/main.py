@@ -1,23 +1,44 @@
 import json
 import random
+from datetime import datetime
 
-import requests
 import pandas as pd
+import requests
 from requests_oauthlib import OAuth1Session
 
-from bot.messages import AQI_MESSAGES, AQI_VALUES, PM25_COMPARISONS
 from bot.helpers import create_logger
-DAILY_RECOMMENDED_PM25_VALUE = 15
+from bot.messages import AQI_MESSAGES, AQI_VALUES
+
+REFERENCE_VALUES = {
+    'co': 7,
+    'no': 14.08,
+    'no2': 25,
+    'o3': 100,
+    'so2': 40,
+    'pm2_5': 15,
+    'pm10': 45
+}
+
+NAME_MAPPING = {
+    'co': 'CO',
+    'no': 'NO',
+    'no2': 'NO₂',
+    'o3': 'O₃',
+    'so2': 'SO₂',
+    'pm2_5': 'PM₂.₅',
+    'pm10': 'PM₁₀'
+}
 
 
 class AirQualityBot:
-    def __init__(self, credentials, lat='50.042', lon='14.411', logger=None):
+    def __init__(self, credentials, lat='50.042', lon='14.411', mock=False, logger=None):
         self.credentials = credentials
         self.lat = lat
         self.lon = lon
         if logger is None:
-            logger= create_logger('AirQuality')
+            logger = create_logger('AirQuality', keboola=False)
         self.logger = logger
+        self.mock = mock
 
     def get_aqi_data(self):
         token = self.credentials.AirQualityCredentials.TOKEN
@@ -49,6 +70,9 @@ class AirQualityBot:
         return result
 
     def send_tweet(self, message):
+        if self.mock:
+            print(message)
+            return
         oauth_tokens = self.credentials.TwitterCredentials.OAUTH_TOKENS
         consumer_key = self.credentials.TwitterCredentials.CONSUMER_KEY
         consumer_secret = self.credentials.TwitterCredentials.CONSUMER_SECRET
@@ -79,20 +103,41 @@ class AirQualityBot:
         json_response = response.json()
         print(json.dumps(json_response, indent=4, sort_keys=True))
 
+    def get_reference_value_message(self, ow_data):
+        references = []
+        for name, reference_value in REFERENCE_VALUES.items():
+            value = ow_data[name]
+            if (multiple := value / reference_value) > 1.5:
+                references += [f'{NAME_MAPPING[name]} ({multiple:.1f}x)']
+        if references:
+            final_message = '\nPřekračující hodnoty jsou: ' + ', '.join(references)
+        else:
+            final_message = ''
+
+        return final_message
+
     def create_message(self, aq_data, ow_data):
         aqi = aq_data['aqi']
-        pm25 = ow_data['pm2_5']
 
         message = random.choice(AQI_MESSAGES).format(aqi=aqi)
-        multiplicator = pm25 / DAILY_RECOMMENDED_PM25_VALUE
+        message += self.get_reference_value_message(ow_data)
+
         for aqi_value, aqi_message in AQI_VALUES.items():
             if aqi_value <= aqi:
-                if multiplicator > 1.2:
-                    message += '\n' + random.choice(PM25_COMPARISONS).format(multiplicator=multiplicator, pm25=pm25)
                 message += '\n\n' + random.choice(aqi_message)
 
                 break
         return message
+
+    @staticmethod
+    def save_data(ow_data, aq_data):
+        data = ow_data
+        data['aqius'] = aq_data['aqi']
+        data['timestamp'] = datetime.now()
+        data = pd.Series(data)
+        data.index.name = 'stat'
+        data = pd.DataFrame(data).T
+        data.to_csv('out/tables/current_data.csv', index=False)
 
     def run(self):
         try:
@@ -101,11 +146,7 @@ class AirQualityBot:
             message = self.create_message(aq_data, ow_data)
 
             self.send_tweet(message=message)
-            final_data = ow_data
-            final_data['aqius'] = aq_data['aqi']
-            data = pd.Series(final_data)
-            data.index.name = 'stat'
-            return data
+            self.save_data(ow_data, aq_data)
         except:
             self.send_tweet(message='Man, something broke. @janhynek should do something about that')
             raise
