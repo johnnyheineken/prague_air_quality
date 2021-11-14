@@ -1,1 +1,2 @@
-/credentials
+credentials/credentials.py
+out/tables/current_data.csv
