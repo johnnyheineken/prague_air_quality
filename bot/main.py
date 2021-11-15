@@ -10,8 +10,7 @@ from bot.helpers import create_logger
 from bot.messages import AQI_MESSAGES, AQI_VALUES
 
 REFERENCE_VALUES = {
-    'co': 7,
-    'no': 14.08,
+    'co': 4000,
     'no2': 25,
     'o3': 100,
     'so2': 40,
