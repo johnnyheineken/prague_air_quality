@@ -9,3 +9,6 @@ Uses IQair and OpenWeather API
 2) pass them to AirQualityBot in `main.py`
 3) fill in tokens in `credentials/credentials.py`
 4) publish the bot on the scheduling service of your choice (shout out to Keboola!)
+
+
+## Feel free to contact me if you would like to extend/reuse this bot
