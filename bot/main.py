@@ -143,9 +143,16 @@ class AirQualityBot:
             aq_data = self.get_aqi_data()
             ow_data = self.get_ow_data()
             message = self.create_message(aq_data, ow_data)
-
-            self.send_tweet(message=message)
             self.save_data(ow_data, aq_data)
+            if int(aq_data['aqi']) == 0:
+                pass
+            elif 0 < int(aq_data['aqi']) < 30:
+                import random
+                if random.random() < 0.1:
+                    self.send_tweet(message=message)
+            else:
+                self.send_tweet(message=message)
+
         except:
-            self.send_tweet(message='Man, something broke. @janhynek should do something about that')
+            self.send_tweet(message='Something broke. @janhynek should do something about that')
             raise

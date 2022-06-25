@@ -1,3 +1,4 @@
 .idea
 credentials/credentials.py
 out/tables/current_data.csv
+/.env.local
