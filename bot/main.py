@@ -35,7 +35,7 @@ class AirQualityBot:
         self.lat = lat
         self.lon = lon
         if logger is None:
-            logger = create_logger('AirQuality', keboola=False)
+            logger = create_logger('AirQuality', keboola=True)
         self.logger = logger
         self.mock = mock
 
@@ -65,7 +65,21 @@ class AirQualityBot:
         #  'pm2_5': 26.43,
         #  'pm10': 31.59,
         #  'nh3': 1.58}
-        result = r.json()['list'][0]['components']
+        data = r.json()['list']
+        if data:
+            result = data[0]['components']
+        else:
+            self.logger.warning('NO OPEN WEATHER API DATA DOWNLOADED.')
+            result = {
+                'co': float('nan'),
+                'no': float('nan'),
+                'no2': float('nan'),
+                'o3': float('nan'),
+                'so2': float('nan'),
+                'pm2_5': float('nan'),
+                'pm10': float('nan'),
+                'nh3': float('nan'),
+            }
         return result
 
     def send_tweet(self, message):
@@ -106,6 +120,8 @@ class AirQualityBot:
         references = []
         for name, reference_value in REFERENCE_VALUES.items():
             value = ow_data[name]
+            if value != value:
+                continue
             if (multiple := value / reference_value) > 1.5:
                 references += [f'{NAME_MAPPING[name]} ({multiple:.1f}x)']
         if references:

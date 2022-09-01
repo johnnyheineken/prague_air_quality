@@ -4,7 +4,7 @@ BASE_MESSAGES = [
     # https://ourworldindata.org/data-review-air-pollution-deaths
     "Znečištění venkovního vzduchu způsobuje 4.5 milionu úmrtí celosvětově. ",
     # Heft-Neal et al. (2018) in Nature: Air pollution and infant mortality in Africa
-    "450 000 novorozenců v Africe zemřelo kvůli špinavému vzduchu. ",
+    # "450 000 novorozenců v Africe zemřelo kvůli špinavému vzduchu. ",
     "Zvýšení koncentrace PM2.5 o 10μg/m³ je spojeno s 9% nárůstem úmrtí novorozenců. ",
     # https://twitter.com/emollick/status/1471686533791031298
     "Ve dnech s horší kvalitou vzduchu dělají šachisti více chyb. ",
